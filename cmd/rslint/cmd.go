@@ -293,6 +293,8 @@ func printDiagnosticDefault(d rule.RuleDiagnostic, w *bufio.Writer, comparePathO
 	bytePos := codeboxStart
 	for _, char := range codeboxText {
 		charBytes := utf8.RuneLen(char)
+		current, next := bytePos, bytePos+charBytes
+		bytePos = next
 
 		if char == '\n' {
 			if line != codeboxEndLine {
@@ -301,20 +303,18 @@ func printDiagnosticDefault(d rule.RuleDiagnostic, w *bufio.Writer, comparePathO
 				lastNonSpaceByteIndex = -1
 				line++
 			}
-			bytePos += charBytes
 			continue
 		}
 
 		if !lineIndentCalculated && !unicode.IsSpace(char) {
 			lineIndentCalculated = true
-			lineStarts[line-codeboxStartLine] = bytePos - int(lineMap[line])
+			lineStarts[line-codeboxStartLine] = current - int(lineMap[line])
 			indentSize = min(indentSize, lineStarts[line-codeboxStartLine])
 		}
 
 		if lineIndentCalculated && !unicode.IsSpace(char) {
-			lastNonSpaceByteIndex = bytePos + charBytes
+			lastNonSpaceByteIndex = next
 		}
-		bytePos += charBytes
 	}
 	if line == codeboxEndLine {
 		lineEnds[line-codeboxStartLine] = lastNonSpaceByteIndex - int(lineMap[line])
